@@ -44,15 +44,20 @@ input:focus { border-color: var(--game-color); outline:none; box-shadow:0 0 8px 
 .bet-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none;}
 #play-btn { width:100%; padding:15px; margin-top:20px; background-color: var(--game-color); color: var(--black-bg); border:none; border-radius:10px; font-size:1.2rem; font-weight:700; cursor:pointer; transition: transform 0.2s ease; box-shadow:0 4px 15px rgba(241,196,15,0.5);}
 #play-btn:active { transform: scale(0.98);}
-.coin-container { perspective:1000px; display:flex; justify-content:center; margin:30px 0; min-height:150px;}
+.coin-container { perspective:1000px; display:flex; justify-content:center; margin:30px 0; min-height:150px; position:relative;}
 .coin { width:100px; height:100px; position:relative; transform-style:preserve-3d; cursor:pointer; border-radius:50%; box-shadow:0 0 20px rgba(255,255,255,0.3); transition: transform 0.5s;}
 .side { width:100%; height:100%; border-radius:50%; position:absolute; backface-visibility:hidden; display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:700; color:var(--black-bg); border:5px solid gold;}
 .head { background-color: var(--game-color); transform: rotateY(0deg);}
 .tail { background-color: var(--game-color); transform: rotateY(180deg);}
-@keyframes flip-head {0%{transform:rotateY(0deg);}100%{transform:rotateY(3600deg);}}
-@keyframes flip-tail {0%{transform:rotateY(0deg);}100%{transform:rotateY(3780deg);}}
-.flipping-head { animation: flip-head 5s cubic-bezier(0.4,0.0,0.2,1) forwards;}
-.flipping-tail { animation: flip-tail 5s cubic-bezier(0.4,0.0,0.2,1) forwards;}
+@keyframes flip-advanced {0%{transform:rotateY(0deg) translateY(0) scale(1);}50%{transform:rotateY(1800deg) translateY(-20px) scale(1.1);}100%{transform:rotateY(3600deg) translateY(0) scale(1);}}
+.flipping-head { animation: flip-advanced 3s cubic-bezier(0.25,0.1,0.25,1) forwards;}
+.flipping-tail { animation: flip-advanced 3s cubic-bezier(0.25,0.1,0.25,1) forwards;}
+.coin.flash-win { box-shadow: 0 0 40px var(--success-color); transition: all 0.5s; }
+.coin.flash-lose { box-shadow: 0 0 40px var(--danger-color); transition: all 0.5s; }
+
+.confetti-piece { position: absolute; width: 8px; height: 8px; background: var(--game-color); opacity: 0.8; border-radius: 50%; animation: confetti-fall linear forwards; z-index:9999;}
+@keyframes confetti-fall {0% {transform: translateY(0) rotate(0deg);} 100% {transform: translateY(300px) rotate(720deg); opacity:0;}}
+
 .bottom-nav { position: fixed; bottom:0; left:0; right:0; max-width:500px; margin:0 auto; display:flex; justify-content:space-around; align-items:center; height:65px; background:rgba(18,18,18,0.95); backdrop-filter:blur(8px); border-top:1px solid rgba(255,255,255,0.1); z-index:1000;}
 .nav-item { display:flex; flex-direction:column; align-items:center; text-decoration:none; color:var(--light-text); font-size:0.7rem; transition: color 0.3s ease; width:25%; padding:5px 0;}
 .nav-item i { font-size:1.3rem; margin-bottom:3px; transition:color 0.3s ease, transform 0.3s ease;}
@@ -63,6 +68,40 @@ input:focus { border-color: var(--game-color); outline:none; box-shadow:0 0 8px 
 .toast-success { background-color: var(--success-color);}
 .toast-danger { background-color: var(--danger-color);}
 </style>
+</head>
+<body>
+<div class="container">
+    <div class="glass-card">
+        <h2>কয়েন ফ্লিপ গেম</h2>
+        <div class="balance-display">
+            Current Balance: <strong id="current-balance">৳0.00</strong>
+        </div>
+        <div class="form-group">
+            <input type="number" id="bet-amount" placeholder="বেট এমাউন্ট লিখুন (৳)" />
+        </div>
+        <div class="bet-buttons">
+            <button class="bet-btn" id="btn-head"><i class="fas fa-coins"></i> হেড</button>
+            <button class="bet-btn" id="btn-tail"><i class="fas fa-coins"></i> টেইল</button>
+        </div>
+        <button id="play-btn">খেলুন</button>
+
+        <div class="coin-container">
+            <div class="coin" id="coin">
+                <div class="side head">হেড</div>
+                <div class="side tail">টেইল</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-message" id="toast"></div>
+
+<div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> হোম</a>
+    <a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i> ডিপোজিট</a>
+    <a href="#" class="nav-item active"><i class="fas fa-gamepad"></i> গেইম </a>
+    <a href="withdraw.html" class="nav-item"><i class="fas fa-arrow-right-arrow-left"></i> উইথড</a>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -86,9 +125,10 @@ let userId = null;
 let userBalance = 0;
 let selectedChoice = null;
 let isFlipping = false;
-
-const HIGH_BALANCE_LIMIT = 500;
-const HIGH_BET_THRESHOLD = 50;
+const MIN_BET = 10;
+const MAX_BET = 10000;
+const MAX_BALANCE = 490;
+let consecutiveBets = [];
 
 const balanceDisplay = document.getElementById('current-balance');
 const betAmountInput = document.getElementById('bet-amount');
@@ -134,22 +174,53 @@ async function updateUserBalance(newBalance){
 }
 
 function getGameOutcome(betAmount, selectedChoice){
+    // ধারাবাহিক বেট লজিক
+    consecutiveBets.push(betAmount);
+    if(consecutiveBets.length > 5) consecutiveBets.shift(); // সর্বশেষ 5 বেট সংরক্ষণ
+
     let winProbability = 0.5;
-    if(betAmount > HIGH_BET_THRESHOLD) winProbability = 0.25;
-    
+
+    // ধারাবাহিক 2500-3000 বেট করলে 490 পর্যন্ত যাওয়ার probability 40%
+    const recentSum = consecutiveBets.reduce((a,b)=>a+b,0);
+    if(recentSum >= 2500 && recentSum <= 3000 && userBalance < MAX_BALANCE){
+        winProbability = 0.4;
+    }
+
+    // বড় বেটের ক্ষেত্রে (50+) win probability 25%
+    if(betAmount > 50) winProbability = Math.min(winProbability, 0.25);
+
     let win = Math.random() < winProbability;
-    
-    // ব্যালেন্স চেক
-    if(win && (userBalance + betAmount) > HIGH_BALANCE_LIMIT) win = false;
-    
+
+    // যদি জেতা হলে balance 490 ছাড়িয়ে যায়, auto lose
+    if(win && (userBalance + betAmount) > MAX_BALANCE) win = false;
+
     return win ? selectedChoice : (selectedChoice==='head'?'tail':'head');
+}
+
+function playSound(result){
+    let audio = new Audio();
+    if(result==='win') audio.src='https://assets.mixkit.co/sfx/preview/mixkit-success-bell-alert-604.mp3';
+    else audio.src='https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3';
+    audio.volume = 0.5;
+    audio.play().catch(e=>console.log("Sound blocked"));
+}
+
+function createConfetti(){
+    for(let i=0;i<30;i++){
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti-piece');
+        confetti.style.left = Math.random()*100 + '%';
+        confetti.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
+        document.body.appendChild(confetti);
+        setTimeout(()=>confetti.remove(),3000);
+    }
 }
 
 async function playGame(){
     if(isFlipping) return;
     const betAmount = parseFloat(betAmountInput.value);
     if(!selectedChoice){ showToast("হেড বা টেইল সিলেক্ট করুন!","danger"); return; }
-    if(isNaN(betAmount) || betAmount <=0){ showToast("সঠিক বেট এমাউন্ট লিখুন!","danger"); return; }
+    if(isNaN(betAmount) || betAmount < MIN_BET || betAmount > MAX_BET){ showToast(`বেট ১০-১০,০০০ এর মধ্যে হতে হবে!`,"danger"); return; }
     if(betAmount > userBalance){ showToast("আপনার ব্যালেন্স যথেষ্ট নয়!","danger"); return; }
 
     isFlipping=true;
@@ -157,20 +228,27 @@ async function playGame(){
 
     const outcome = getGameOutcome(betAmount, selectedChoice);
 
-    coinElement.classList.remove('flipping-head','flipping-tail');
-    void coinElement.offsetWidth; // reflow to restart animation
+    // Coin animation
+    coinElement.classList.remove('flipping-head','flipping-tail','flash-win','flash-lose');
+    void coinElement.offsetWidth;
     if(outcome==='head') coinElement.classList.add('flipping-head');
     else coinElement.classList.add('flipping-tail');
 
-    // ৫ সেকেন্ড অ্যানিমেশন অপেক্ষা
+    // ৩ সেকেন্ড অপেক্ষা
     setTimeout(async ()=>{
         let newBalance = userBalance;
         if(selectedChoice === outcome){
             newBalance += betAmount;
+            if(newBalance > MAX_BALANCE) newBalance = MAX_BALANCE;
+            coinElement.classList.add('flash-win');
             showToast(`আপনি জিতেছেন! 🎉 +৳${betAmount.toFixed(2)}`, 'success');
+            createConfetti();
+            playSound('win');
         } else {
             newBalance -= betAmount;
+            coinElement.classList.add('flash-lose');
             showToast(`আপনি হারেছেন! 😔 -৳${betAmount.toFixed(2)}`, 'danger');
+            playSound('lose');
         }
 
         await updateUserBalance(newBalance);
@@ -184,7 +262,7 @@ async function playGame(){
         btnHead.disabled=false;
         btnTail.disabled=false;
         betAmountInput.value='';
-    },5000);
+    },3000);
 }
 
 // Event listeners
@@ -202,40 +280,5 @@ onAuthStateChanged(auth, user=>{
     }
 });
 </script>
-
-</head>
-<body>
-<div class="container">
-    <div class="glass-card">
-        <h2>কয়েন ফ্লিপ গেম</h2>
-        <div class="balance-display">
-            Current Balance: <strong id="current-balance">৳0.00</strong>
-        </div>
-        <div class="form-group">
-            <input type="number" id="bet-amount" placeholder="বেট এমাউন্ট লিখুন (৳)" />
-        </div>
-        <div class="bet-buttons">
-            <button class="bet-btn" id="btn-head"><i class="fas fa-coins"></i> হেড</button>
-            <button class="bet-btn" id="btn-tail"><i class="fas fa-coins"></i> টেইল</button>
-        </div>
-        <button id="play-btn">খেলুন</button>
-
-        <div class="coin-container">
-            <div class="coin" id="coin">
-                <div class="side head">হেড</div>
-                <div class="side tail">টেইল</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="toast-message" id="toast"></div>
-
-<div class="bottom-nav">
-    <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> হোম</a>
-    <a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i> ডিপোজিট</a>
-    <a href="#" class="nav-item active"><i class="fas fa-gamepad"></i> গেইম </a>
-    <a href="withdraw.html" class="nav-item"><i class="fas fa-arrow-right-arrow-left"></i> উইথড</a>
-</div>
 </body>
 </html>
