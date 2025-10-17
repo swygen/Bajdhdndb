@@ -14,7 +14,7 @@
       margin: 0;
       background: #f6f7fb;
       color: #222;
-      padding-top: 60px; /* Header space */
+      padding-top: 60px;
     }
     /* Header */
     .header {
@@ -24,7 +24,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 15px 20px;
-      position: fixed; /* Fixed header */
+      position: fixed;
       top: 0;
       width: 100%;
       box-shadow: 0 2px 10px rgba(0,0,0,0.15);
@@ -86,16 +86,8 @@
     .notification-content p {
       margin: 0;
       color: #555;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-    .notification-time {
-      margin-top: 8px;
-      font-size: 0.75rem;
-      color: #999;
-    }
-    .notification-time i {
-        margin-right: 5px;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -112,7 +104,6 @@
   </div>
 
   <script type="module">
-    // Firebase SDK-এর সর্বশেষ স্থিতিশীল ভার্সন
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { 
       getFirestore, collection, getDocs, 
@@ -130,16 +121,15 @@
       measurementId: "G-GZ38LM778D"
     };
 
-    // ইনিশিয়ালাইজেশন
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // ✅ নোটিফিকেশন লোড করার ফাংশন
     async function loadNotifications() {
       const listContainer = document.getElementById("notificationList");
       listContainer.innerHTML = `<p class="empty">🔔 নোটিফিকেশন লোড হচ্ছে...</p>`;
 
       try {
+        // ✅ নোটিফিকেশনগুলো timestamp অনুযায়ী সিরিয়ালে (নতুন থেকে পুরাতন) আনা হচ্ছে
         const q = query(collection(db, "notifications"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
 
@@ -151,14 +141,7 @@
         listContainer.innerHTML = "";
         snapshot.forEach(doc => {
           const data = doc.data();
-
-          // ✅ সংশোধিত কোড: toDate() কল করার আগে data.timestamp নিশ্চিত করা হলো
-          const time = data.timestamp && typeof data.timestamp.toDate === 'function' 
-              ? new Date(data.timestamp.toDate()).toLocaleString("bn-BD", {
-                  hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
-                }) 
-              : "⏳ অপেক্ষমাণ..."; // যদি Timestamp এখনও না আসে
-
+          
           const card = document.createElement("div");
           card.className = "notification-card";
           card.innerHTML = `
@@ -168,7 +151,6 @@
             <div class="notification-content">
               <h4>${data.title || 'নোটিফিকেশন'}</h4>
               <p>${data.message || ''}</p>
-              <div class="notification-time"><i class="fas fa-clock"></i> ${time}</div>
             </div>
           `;
           listContainer.appendChild(card);
@@ -179,7 +161,6 @@
       }
     }
 
-    // ✅ পেজ লোড হলে কল হবে
     loadNotifications();
   </script>
 </body>
