@@ -15,8 +15,10 @@
       background: #f6f7fb;
       color: #222;
       padding-top: 60px;
+      /* 🆕 বটম নেভিগেশনের জন্য অতিরিক্ত প্যাডিং */
+      padding-bottom: 70px; 
     }
-    /* Header */
+    /* Header (অপরিবর্তিত) */
     .header {
       background: linear-gradient(135deg, #4f46e5, #06b6d4);
       color: white;
@@ -36,7 +38,7 @@
       margin: 0;
       font-weight: 700;
     }
-    /* Container & List */
+    /* Container & List (অপরিবর্তিত) */
     .container {
       max-width: 800px;
       margin: 20px auto;
@@ -51,7 +53,6 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
       margin-top: 20px;
     }
-    /* Notification Card Styling */
     .notification-card {
       background: #fff;
       border-radius: 12px;
@@ -61,9 +62,6 @@
       align-items: flex-start;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
       transition: transform 0.2s;
-    }
-    .notification-card:hover {
-        transform: translateY(-2px);
     }
     .notification-icon {
       background: #e0f7fa;
@@ -89,6 +87,47 @@
       font-size: 0.95rem;
       line-height: 1.5;
     }
+    
+    /* 🆕 বটম নেভিগেশন স্টাইল */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #ffffff;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 1000;
+        box-sizing: border-box;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: #777;
+        font-size: 0.75rem;
+        padding: 5px 0;
+        flex-grow: 1;
+        transition: color 0.3s;
+    }
+
+    .nav-item i {
+        font-size: 1.2rem;
+        margin-bottom: 3px;
+        transition: color 0.3s;
+    }
+
+    .nav-item.active, .nav-item:hover {
+        color: #4f46e5;
+    }
+    .nav-item.active i, .nav-item:hover i {
+        color: #4f46e5;
+    }
   </style>
 </head>
 <body>
@@ -103,6 +142,25 @@
     </div>
   </div>
 
+  <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>হোম</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <i class="fas fa-bell"></i>
+            <span>নোটিফিকেশন</span>
+        </a>
+        <a href="support.html" class="nav-item">
+            <i class="fas fa-headset"></i>
+            <span>সাপোর্ট</span>
+        </a>
+        <a href="deposit.html" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>ডিপোজিট</span>
+        </a>
+    </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { 
@@ -110,7 +168,6 @@
       orderBy, query 
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-    // ✅ আপনার দেওয়া কনফিগারেশন
     const firebaseConfig = {
       apiKey: "AIzaSyC1nQXKB2gqIUgnecZP8H_BYbhNTvI9InY",
       authDomain: "head-tell-f7a80.firebaseapp.com",
@@ -129,7 +186,6 @@
       listContainer.innerHTML = `<p class="empty">🔔 নোটিফিকেশন লোড হচ্ছে...</p>`;
 
       try {
-        // ✅ সিরিয়াল অনুযায়ী (নতুন থেকে পুরাতন) আনা হচ্ছে
         const q = query(collection(db, "notifications"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
 
@@ -151,7 +207,7 @@
             <div class="notification-content">
               <h4>${data.title || 'নোটিফিকেশন'}</h4>
               <p>${data.message || ''}</p>
-              </div>
+            </div>
           `;
           listContainer.appendChild(card);
         });
