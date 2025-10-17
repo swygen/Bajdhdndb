@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>রেফার করুন - Telegram Mini App</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');
+
+:root {
+    --black-bg: #121212;
+    --card-bg-blur: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(255, 255, 255, 0.15);
+    --refer-color: #2ecc71;
+    --primary-color: #007bff;
+    --success-color: #4CAF50;
+    --text-color: #ffffff;
+    --light-text: #cccccc;
+}
+
+body, html {
+    margin:0; padding:0; height:100%;
+    font-family:'Tiro Bangla', sans-serif;
+    background-color: var(--black-bg);
+    color: var(--text-color);
+    overflow-x:hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.container {
+    padding:20px;
+    padding-bottom:80px;
+    max-width:500px;
+    margin:0 auto;
+}
+
+.glass-card {
+    background: var(--card-bg-blur);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    border: 1px solid var(--card-border);
+    padding:20px;
+    margin-bottom:25px;
+    box-shadow:0 8px 32px 0 rgba(0,0,0,0.37);
+    text-align:center;
+}
+
+h2 {
+    font-size:1.5rem;
+    margin-bottom:30px;
+    text-align:center;
+    color:var(--refer-color);
+    text-shadow:0 0 5px rgba(46,204,113,0.5);
+}
+
+.referral-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px dashed var(--refer-color);
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:25px;
+    word-break: break-all;
+}
+#referral-link {
+    font-family: monospace;
+    font-size: 0.95rem;
+    color: var(--refer-color);
+    font-weight: 700;
+}
+.referral-box p {
+    font-size:0.9rem;
+    color: var(--light-text);
+    margin-bottom:5px;
+}
+
+#copy-btn {
+    width:100%;
+    padding:12px;
+    background-color: var(--refer-color);
+    color: var(--black-bg);
+    border:none;
+    border-radius:8px;
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform 0.2s ease;
+    box-shadow:0 4px 10px rgba(46,204,113,0.5);
+    margin-top:15px;
+}
+#copy-btn:active { transform: scale(0.98); }
+
+.count-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 25px;
+}
+.count-box {
+    flex-grow: 1;
+    padding:15px;
+    background: rgba(46,204,113,0.1);
+    border-radius:10px;
+    border:1px solid rgba(46,204,113,0.3);
+    text-align: left;
+}
+.count-box i {
+    font-size:1.5rem;
+    color: var(--refer-color);
+    margin-right:10px;
+}
+.count-box p {
+    font-size:0.9rem;
+    color: var(--light-text);
+    margin:0;
+    display:block;
+    text-align: center;
+}
+.count-box strong {
+    font-size:1.3rem;
+    color: var(--refer-color);
+    margin-left:5px;
+    display:block;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom:0; left:0; right:0;
+    max-width:500px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    height:65px;
+    background: rgba(18,18,18,0.95);
+    backdrop-filter: blur(8px);
+    border-top:1px solid rgba(255,255,255,0.1);
+    z-index:1000;
+}
+.nav-item {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-decoration:none;
+    color: var(--light-text);
+    font-size:0.7rem;
+    transition: color 0.3s ease;
+    width:25%;
+    padding:5px 0;
+}
+.nav-item i {
+    font-size:1.3rem;
+    margin-bottom:3px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+.nav-item:hover, .nav-item.active { color: var(--refer-color); }
+.nav-item.active i { transform:scale(1.1); }
+
+.toast-message {
+    visibility:hidden;
+    min-width:250px;
+    background-color: var(--success-color);
+    color:#fff;
+    text-align:center;
+    border-radius:8px;
+    padding:16px;
+    position:fixed;
+    z-index:2000;
+    left:50%;
+    bottom:80px;
+    transform:translateX(-50%);
+    opacity:0;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+.toast-message.show { visibility:visible; opacity:1; bottom:90px; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+  authDomain: "red-chili-bot.firebaseapp.com",
+  projectId: "red-chili-bot",
+  storageBucket: "red-chili-bot.appspot.com",
+  messagingSenderId: "125399502243",
+  appId: "1:125399502243:web:e2642cbbd3675622379e16",
+  measurementId: "G-ETBNKN4N9B"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+</head>
+<body>
+
+<div class="container">
+<h2>রেফার করে ইনকাম করুন</h2>
+
+<div class="glass-card">
+<p style="font-size: 1.1rem; color: var(--text-color); margin-bottom: 15px;">
+আপনার বন্ধুকে আমন্ত্রণ জানান এবং 100 BDT পর্যন্ত কমিশন পান!
+</p>
+
+<div class="referral-box">
+<p>আপনার রেফারেল লিঙ্ক:</p>
+<div id="referral-link">...লোডিং...</div>
+</div>
+
+<button id="copy-btn" disabled>
+<i class="fas fa-copy"></i> লিঙ্ক কপি করুন
+</button>
+
+<div class="count-group">
+    <div class="count-box">
+        <p>
+            <i class="fas fa-users"></i> মোট রেফারেল:
+        </p>
+        <strong id="referral-count">0</strong>
+    </div>
+    <div class="count-box">
+        <p>
+            <i class="fas fa-sack-dollar"></i> মোট কমিশন (৳):
+        </p>
+        <strong id="total-commission">0.00</strong>
+    </div>
+</div>
+
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+<p style="font-size: 0.85rem; color: var(--light-text);">
+রেফারেল কমিশন স্বয়ংক্রিয়ভাবে আপনার অ্যাকাউন্টে যোগ হবে।
+</p>
+</div>
+</div>
+
+<div id="toast" class="toast-message">লিঙ্ক সফলভাবে কপি করা হয়েছে! ✅</div>
+
+<div class="bottom-nav">
+<a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i><span>হোম</span></a>
+<a href="game.html" class="nav-item"><i class="fas fa-gamepad"></i><span>গেম</span></a>
+<a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i><span>ডিপোজিট</span></a>
+<a href="#" class="nav-item active"><i class="fas fa-user-group"></i><span>রেফার</span></a>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+  authDomain: "red-chili-bot.firebaseapp.com",
+  projectId: "red-chili-bot",
+  storageBucket: "red-chili-bot.appspot.com",
+  messagingSenderId: "125399502243",
+  appId: "1:125399502243:web:e2642cbbd3675622379e16",
+  measurementId: "G-ETBNKN4N9B"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Telegram context (optional)
+const tg = window.Telegram?.WebApp || {};
+
+const referralLinkElement = document.getElementById('referral-link');
+const copyButton = document.getElementById('copy-btn');
+const referralCountElement = document.getElementById('referral-count');
+const totalCommissionElement = document.getElementById('total-commission');
+
+// ✅ রেফারেল লিংক তৈরি ফাংশন
+function setReferralLink(uid){
+    const shortId = uid.substring(0, 8);
+    referralLinkElement.textContent = `https://t.me/Spicy_Earn_bot?start=${shortId}`;
+    copyButton.disabled = false;
+}
+
+// ✅ ইউজার লগইন চেক
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const uid = user.uid;
+        setReferralLink(uid);
+    } else {
+        referralLinkElement.textContent = 'লগইন প্রয়োজন 🔒';
+        copyButton.disabled = true;
+    }
+});
+
+// ✅ কপি ফাংশন
+copyButton.addEventListener('click', () => {
+    const linkToCopy = referralLinkElement.textContent;
+    navigator.clipboard.writeText(linkToCopy)
+        .then(() => showToast("লিঙ্ক সফলভাবে কপি হয়েছে ✅"))
+        .catch(() => showToast("কপি করতে ব্যর্থ ❌"));
+});
+
+// ✅ টোস্ট মেসেজ
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

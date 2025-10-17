@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>উইথড্র - অ্যাপ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+/* এখানে তোমার আগের CSS পুরোপুরি থাকবে, কোন পরিবর্তন নেই */
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');  
+:root { --black-bg:#121212;--card-bg-blur:rgba(255,255,255,0.08);--card-border:rgba(255,255,255,0.15);--primary-color:#f44336;--highlight-color:#007bff;--success-color:#4CAF50;--text-color:#fff;--light-text:#ccc; }
+body, html { margin:0;padding:0;height:100%;font-family:'Tiro Bangla',sans-serif;background-color:var(--black-bg);color:var(--text-color);overflow-x:hidden;-webkit-tap-highlight-color:transparent; }
+.container { padding:20px;padding-bottom:80px;max-width:500px;margin:0 auto; }
+.glass-card { background:var(--card-bg-blur);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:15px;border:1px solid var(--card-border);padding:20px;margin-bottom:25px;box-shadow:0 8px 32px 0 rgba(0,0,0,0.37);transition:all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);}
+h2 { font-size:1.5rem;margin-bottom:30px;text-align:center;color:var(--primary-color);text-shadow:0 0 5px rgba(244,67,54,0.5); }
+.method-selector { display:flex;justify-content:space-around;margin-bottom:30px;gap:15px; }
+.method-option { flex-grow:1;text-align:center;padding:15px 10px;border-radius:12px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,0.05);transition:all 0.3s ease; }
+.method-option:active { transform:scale(0.95); }
+.method-icon { width:45px;height:45px;margin:0 auto 8px auto;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
+#bKash-method .method-icon { background-image:url('https://i.postimg.cc/YSdGXHkz/1656235223bkash-logo.png'); }
+#Nagad-method .method-icon { background-image:url('https://i.postimg.cc/SKg2ZhqB/id-Npcxg37-S-1760009795565.png'); }
+.method-option.selected { border:2px solid var(--primary-color);box-shadow:0 0 15px rgba(244,67,54,0.5);background:rgba(244,67,54,0.1);}
+.form-group { margin-bottom:20px;}
+label { display:block;margin-bottom:8px;font-size:1rem;color:var(--light-text); }
+input[type="number"], input[type="text"] { width:100%;padding:12px;border:1px solid var(--card-border);border-radius:8px;background:rgba(255,255,255,0.05);color:var(--text-color);font-size:1rem;box-sizing:border-box;transition:border-color 0.3s ease; }
+input:focus { border-color:var(--primary-color);outline:none;box-shadow:0 0 8px rgba(244,67,54,0.5);}
+.note { background: rgba(18,18,18,0.95);color:var(--light-text);padding:12px;border-radius:8px;font-size:0.95rem;text-align:center;margin-bottom:25px;border:1px dashed var(--card-border);}
+.note strong { color:var(--success-color); font-size:1.2rem; }
+.submit-btn { width:100%;padding:15px;background-color:var(--primary-color);color:var(--text-color);border:none;border-radius:10px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;box-shadow:0 4px 15px rgba(244,67,54,0.4); }
+.submit-btn:hover { background-color:#c0392b; }
+.submit-btn:active { transform:scale(0.98); }
+.submit-btn:disabled { background-color:#555;cursor:not-allowed;opacity:0.6;box-shadow:none; }
+.bottom-nav { position:fixed;bottom:0;left:0;right:0;max-width:500px;margin:0 auto;display:flex;justify-content:space-around;align-items:center;height:65px;background:rgba(18,18,18,0.95);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,0.1);z-index:1000; }
+.nav-item { display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--light-text);font-size:0.7rem;transition:color 0.3s ease;width:25%;padding:5px 0;}
+.nav-item i { font-size:1.3rem;margin-bottom:3px;transition:color 0.3s ease, transform 0.3s ease;}
+.nav-item:hover, .nav-item.active { color:var(--primary-color);}
+.nav-item.active i { color:var(--primary-color);transform:scale(1.1);}
+.toast-message { visibility:hidden;min-width:250px;background-color:var(--primary-color);color:#fff;text-align:center;border-radius:8px;padding:16px;position:fixed;z-index:2000;left:50%;bottom:80px;transform:translateX(-50%);opacity:0;transition:opacity 0.5s,bottom 0.5s;}
+.toast-message.show { visibility:visible;opacity:1;bottom:90px;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" defer></script>
+</head>
+<body>
+<div class="container">
+    <h2>উইথড্র রিকোয়েস্ট</h2>
+      
+    <div class="glass-card">
+        <div class="note">
+            আপনার বর্তমান ব্যালেন্স: <strong id="current-balance">লোড হচ্ছে...</strong>   
+            <br>
+            <small style="color: var(--light-text);">সর্বনিম্ন উইথড্র: ৫০০৳ | সর্বোচ্চ: ১০,০০০৳</small>
+        </div>
+          
+        <label>পেমেন্ট মেথড নির্বাচন করুন</label>
+        <div class="method-selector">
+            <div class="method-option" id="bKash-method" data-method="bKash">
+                <div class="method-icon"></div>
+                <span>বিকাশ (Personal)</span>
+            </div>
+            <div class="method-option" id="Nagad-method" data-method="Nagad">
+                <div class="method-icon"></div>
+                <span>নগদ (Personal)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <form id="withdrawForm">
+            <div class="form-group">
+                <label for="amount">পরিমাণ (৳):</label>
+                <input type="number" id="amount" placeholder="৫০০৳ থেকে ১০,০০০৳" min="500" max="10000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="payoutNumber">আপনার পেমেন্ট নম্বর:</label>
+                <input type="number" id="payoutNumber" placeholder="১১ সংখ্যার ব্যক্তিগত নম্বর" required maxlength="11">
+            </div>
+
+            <button type="submit" class="submit-btn" disabled id="submit-button">উইথড্র করুন</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast-message"></div>
+
+<div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item">
+        <i class="fas fa-home"></i>
+        <span>হোম</span>
+    </a>
+    <a href="deposit.html" class="nav-item">
+        <i class="fas fa-wallet"></i>
+        <span>ডিপোজিট</span>
+    </a>
+    <a href="withdraw.html" class="nav-item active">
+        <i class="fas fa-arrow-right-arrow-left"></i>
+        <span>উইথড্র</span>
+    </a>
+    <a href="history.html" class="nav-item">
+        <i class="fas fa-history"></i>
+        <span>হিস্টোরি</span>
+    </a>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+      authDomain: "red-chili-bot.firebaseapp.com",
+      projectId: "red-chili-bot",
+      storageBucket: "red-chili-bot.appspot.com",
+      messagingSenderId: "125399502243",
+      appId: "1:125399502243:web:e2642cbbd3675622379e16",
+      measurementId: "G-ETBNKN4N9B"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let selectedMethod = null;
+    let currentBalance = 0;
+    let userId = null;
+
+    const methods = document.querySelectorAll('.method-option');
+    const form = document.getElementById('withdrawForm');
+    const submitButton = document.getElementById('submit-button');
+    const amountInput = document.getElementById('amount');
+    const payoutNumberInput = document.getElementById('payoutNumber');
+    const balanceDisplay = document.getElementById('current-balance');
+
+    // ইউজার লগইন চেক
+    auth.onAuthStateChanged(async user => {
+        if (user) {
+            userId = user.uid;
+            await loadUserData();
+        } else {
+            showToast("আপনি লগইন করুন");
+            setTimeout(() => window.location.href = 'login.html', 1500);
+        }
+    });
+
+    // ইউজার ব্যালেন্স লোড
+    async function loadUserData() {
+        if (!userId) return;
+        try {
+            // Setup real-time listener for balance for a better UX
+            db.collection('users').doc(userId).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    // Ensure the balance is treated as a number
+                    currentBalance = parseFloat(data.balance || 0); 
+                    // Update display
+                    balanceDisplay.textContent = `৳ ${currentBalance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+                    checkFormValidity();
+                } else {
+                    balanceDisplay.textContent = "ডেটা পাওয়া যায়নি";
+                }
+            }, err => {
+                console.error("Balance loading error:", err);
+                balanceDisplay.textContent = "লোডিং ত্রুটি";
+            });
+
+        } catch (err) {
+            console.error(err);
+            balanceDisplay.textContent = "লোডিং ত্রুটি";
+        }
+    }
+
+    // পেমেন্ট মেথড নির্বাচন
+    methods.forEach(method => {
+        method.addEventListener('click', () => {
+            methods.forEach(m => m.classList.remove('selected'));
+            method.classList.add('selected');
+            selectedMethod = method.dataset.method;
+            checkFormValidity();
+        });
+    });
+
+    function checkFormValidity() {
+        const amountValue = parseFloat(amountInput.value);
+        const numberValid = payoutNumberInput.value.trim().length === 11 && /^\d+$/.test(payoutNumberInput.value.trim());
+        // Crucial Check: Amount must be within limits AND less than or equal to currentBalance
+        const amountValid = amountValue >= 500 && amountValue <= 10000 && amountValue <= currentBalance;
+
+        submitButton.disabled = !(selectedMethod && amountValid && numberValid);
+        
+        if (amountValue > currentBalance && amountValue >= 500) {
+            submitButton.title = "অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।";
+        } else {
+            submitButton.title = "";
+        }
+    }
+
+    amountInput.addEventListener('input', checkFormValidity);
+    payoutNumberInput.addEventListener('input', checkFormValidity);
+
+    payoutNumberInput.oninput = function () {
+        if (this.value.length > 11) this.value = this.value.slice(0, 11);
+    };
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        // Change color based on type (using primary color for error in this case)
+        toast.style.backgroundColor = isError ? 'var(--primary-color)' : 'var(--success-color)';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ফর্ম সাবমিশন
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const withdrawalAmount = parseFloat(amountInput.value);
+
+        if (!selectedMethod) {
+            showToast("দয়া করে একটি মেথড নির্বাচন করুন।", true);
+            return;
+        }
+        
+        if (withdrawalAmount > currentBalance) {
+            showToast("অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই।", true);
+            return;
+        }
+        
+        if (!checkFormValidity()) {
+             showToast("ফর্মের তথ্য সঠিক নয়।", true);
+             return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "অনুরোধ পাঠানো হচ্ছে... ⏳";
+
+        const withdrawData = {
+            method: selectedMethod,
+            payoutNumber: payoutNumberInput.value.trim(),
+            amount: withdrawalAmount,
+            userId: userId,
+            status: 'Pending', // Initial status
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() // Use server timestamp
+        };
+
+        try {
+            // 1. Deduct the balance immediately to prevent double withdrawal (client-side update for UX, server will validate)
+            // Note: A more robust system would use a Firestore Transaction to ensure atomic operation.
+            await db.collection('users').doc(userId).update({
+                 balance: firebase.firestore.FieldValue.increment(-withdrawalAmount)
+            });
+            
+            // 2. Create the withdrawal request
+            await db.collection('withdrawRequests').add(withdrawData);
+
+            showToast("উইথড্র অনুরোধ সফল হয়েছে! ✅");
+            
+            // Form reset and button state update
+            form.reset();
+            selectedMethod = null;
+            document.querySelectorAll('.method-option').forEach(m => m.classList.remove('selected'));
+            
+            // Wait for balance listener to update or force a check
+            setTimeout(() => {
+                // Redirect to history for user to check status
+                window.location.href = 'history.html'; 
+            }, 1000); 
+
+        } catch (err) {
+            console.error(err);
+            
+            // Revert balance (This is a simplified client-side attempt. Server should handle reconciliation)
+            // It's safer to only show error and let admin/server logic handle any balance discrepancies.
+            
+            showToast("উইথড্র ব্যর্থ হয়েছে ❌", true);
+            submitButton.textContent = "উইথড্র করুন";
+            checkFormValidity(); // Re-enable if form is valid
+        }
+    });
+
+});
+</script>
+</body>
+</html>

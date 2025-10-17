@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>কয়েন ফ্লিপ গেম - অ্যাপ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');
+
+        :root {
+            --black-bg: #121212;
+            --card-bg-blur: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --game-color: #f1c40f;
+            --primary-color: #007bff;
+            --success-color: #4CAF50;
+            --danger-color: #f44336;
+            --text-color: #ffffff;
+            --light-text: #cccccc;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Tiro Bangla', sans-serif;
+            background-color: var(--black-bg);
+            color: var(--text-color);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            padding: 20px;
+            padding-bottom: 80px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: var(--card-bg-blur);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--game-color);
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+        }
+
+        .balance-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: var(--light-text);
+        }
+
+        .balance-display strong {
+            color: var(--success-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: var(--game-color);
+            outline: none;
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+        }
+
+        .bet-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+        }
+
+        .bet-btn {
+            flex: 1;
+            padding: 15px 10px;
+            border: 2px solid var(--card-border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bet-btn:hover {
+            border-color: var(--game-color);
+        }
+
+        .bet-btn.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+        }
+
+        .bet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #play-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: var(--game-color);
+            color: var(--black-bg);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.5);
+        }
+
+        #play-btn:active {
+            transform: scale(0.98);
+        }
+
+        .coin-container {
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            min-height: 150px;
+        }
+
+        .coin {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: transform 0.5s;
+        }
+
+        .side {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--black-bg);
+            border: 5px solid gold;
+        }
+
+        .head {
+            background-color: var(--game-color);
+            transform: rotateY(0deg);
+        }
+
+        .tail {
+            background-color: var(--game-color);
+            transform: rotateY(180deg);
+        }
+
+        @keyframes flip-head {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(3600deg); }
+        }
+
+        @keyframes flip-tail {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(3780deg); }
+        }
+
+        .flipping-head {
+            animation: flip-head 5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+        }
+
+        .flipping-tail {
+            animation: flip-tail 5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 65px;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--light-text);
+            font-size: 0.7rem;
+            transition: color 0.3s ease;
+            width: 25%;
+            padding: 5px 0;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--game-color);
+        }
+
+        .nav-item.active i {
+            color: var(--game-color);
+            transform: scale(1.1);
+        }
+
+        .toast-message {
+            visibility: hidden;
+            min-width: 250px;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+            font-weight: 700;
+            color: var(--text-color); /* টোস্ট মেসেজের টেক্সট কালার */
+        }
+
+        .toast-message.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 90px;
+        }
+
+        .toast-success { background-color: var(--success-color); }
+        .toast-danger { background-color: var(--danger-color); }
+
+    </style>
+    <script type="module">
+        // ⚠️ দ্রষ্টব্য: Firebase কনফিগারেশন অপরিবর্তিত রাখা হয়েছে।
+        // গেমের লজিক সার্ভার-সাইডে রাখলে এটি আরও সুরক্ষিত হবে।
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+            authDomain: "red-chili-bot.firebaseapp.com",
+            projectId: "red-chili-bot",
+            storageBucket: "red-chili-bot.firebasestorage.app",
+            messagingSenderId: "125399502243",
+            appId: "1:125399502243:web:e2642cbbd3675622379e16",
+            measurementId: "G-ETBNKN4N9B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = null;
+        let userBalance = 0.0;
+        let selectedChoice = null;
+        let isFlipping = false;
+
+        // 🎯 আপনার অনুরোধ অনুসারে নতুন কনস্ট্যান্টস
+        const HIGH_BET_THRESHOLD = 50; 
+        // 50 এর উপরে বেট করলে জেতার সম্ভাবনা: 25% (0.25)
+        const LOW_ODDS_PROBABILITY = 0.25; 
+
+        const balanceDisplay = document.getElementById('current-balance');
+        const betAmountInput = document.getElementById('bet-amount');
+        const btnHead = document.getElementById('btn-head');
+        const btnTail = document.getElementById('btn-tail');
+        const playBtn = document.getElementById('play-btn');
+        const coinElement = document.getElementById('coin');
+        const toast = document.getElementById('toast');
+
+        function updateBalanceDisplay() {
+            balanceDisplay.textContent = `৳ ${userBalance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
+
+        function showToast(message, type='success') {
+            toast.textContent = message;
+            toast.className = `toast-message show ${type === 'success' ? 'toast-success' : 'toast-danger'}`;
+            setTimeout(() => {
+                toast.className = 'toast-message';
+            }, 3000);
+        }
+
+        function selectChoice(choice) {
+            if (isFlipping) return;
+            selectedChoice = choice;
+            btnHead.classList.remove('selected');
+            btnTail.classList.remove('selected');
+            if (choice === 'head') btnHead.classList.add('selected');
+            if (choice === 'tail') btnTail.classList.add('selected');
+        }
+
+        async function loadUserBalance() {
+            if (!userId) return;
+            const userRef = doc(db, "users", userId);
+            const docSnap = await getDoc(userRef);
+            if (docSnap.exists()) {
+                userBalance = parseFloat(docSnap.data().balance) || 0;
+                updateBalanceDisplay();
+            }
+        }
+
+        async function updateUserBalance(newBalance) {
+            if (!userId) return;
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, { balance: newBalance });
+            userBalance = newBalance;
+            updateBalanceDisplay();
+        }
+        
+        // 🎯 জেতার সম্ভাবনা নিয়ন্ত্রণের ফাংশন
+        function getGameOutcome(betAmount, selectedChoice) {
+            // 50 বা তার নিচে: 50% জেতার সম্ভাবনা
+            let winProbability = 0.5; 
+
+            // 50 এর উপরে: 25% জেতার সম্ভাবনা
+            if (betAmount > HIGH_BET_THRESHOLD) {
+                winProbability = LOW_ODDS_PROBABILITY; // 0.25
+            }
+
+            // র্যান্ডম সংখ্যা (0 থেকে 1 এর মধ্যে) winProbability এর চেয়ে ছোট হলে জিতবে
+            if (Math.random() < winProbability) {
+                // জেতা: ফলাফলটি ব্যবহারকারীর পছন্দের সাথে মিলবে
+                return selectedChoice; 
+            } else {
+                // হারা: ফলাফলটি ব্যবহারকারীর পছন্দের বিপরীত হবে
+                return selectedChoice === 'head' ? 'tail' : 'head';
+            }
+        }
+
+        async function playGame() {
+            if (isFlipping) return;
+            const betAmount = parseFloat(betAmountInput.value);
+            if (!selectedChoice) { showToast("আপনি হেড বা টেইল সিলেক্ট করুন!", 'danger'); return; }
+            if (isNaN(betAmount) || betAmount <= 0) { showToast("সঠিক বেট এমাউন্ট লিখুন!", 'danger'); return; }
+            if (betAmount > userBalance) { showToast("আপনার ব্যালেন্স যথেষ্ট নয়!", 'danger'); return; }
+
+            isFlipping = true;
+            playBtn.disabled = true;
+            btnHead.disabled = true;
+            btnTail.disabled = true;
+
+            // পরিবর্তিত লজিক অনুসারে ফলাফল নির্ধারণ
+            const outcome = getGameOutcome(betAmount, selectedChoice); 
+
+            coinElement.classList.remove('flipping-head', 'flipping-tail');
+            void coinElement.offsetWidth; // reflow to restart animation
+            if (outcome === 'head') coinElement.classList.add('flipping-head');
+            else coinElement.classList.add('flipping-tail');
+
+            // কয়েন অ্যানিমেশনের জন্য অপেক্ষা
+            setTimeout(async () => {
+                let newBalance = userBalance;
+                if (selectedChoice === outcome) {
+                    newBalance += betAmount;
+                    showToast(`আপনি জিতেছেন! 🎉 +৳${betAmount.toFixed(2)}`, 'success');
+                } else {
+                    newBalance -= betAmount;
+                    showToast(`আপনি হারেছেন! 😔 -৳${betAmount.toFixed(2)}`, 'danger');
+                }
+
+                await updateUserBalance(newBalance);
+
+                // গেম শেষ হওয়ার পর স্টেট রিসেট
+                selectedChoice = null;
+                btnHead.classList.remove('selected');
+                btnTail.classList.remove('selected');
+                isFlipping = false;
+                playBtn.disabled = false;
+                btnHead.disabled = false;
+                btnTail.disabled = false;
+
+                betAmountInput.value = '';
+            }, 5000);
+        }
+
+        // Event Listeners
+        btnHead.addEventListener('click', () => selectChoice('head'));
+        btnTail.addEventListener('click', () => selectChoice('tail'));
+        playBtn.addEventListener('click', playGame);
+
+        // Firebase Auth Listener
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                userId = user.uid;
+                loadUserBalance();
+            } else {
+                showToast("প্রথমে লগইন করুন!", 'danger');
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card">
+            <h2>কয়েন ফ্লিপ গেম</h2>
+            <div class="balance-display">
+                Current Balance: <strong id="current-balance">৳0.00</strong>
+            </div>
+            <div class="form-group">
+                <input type="number" id="bet-amount" placeholder="বেট এমাউন্ট লিখুন (৳)" />
+            </div>
+            <div class="bet-buttons">
+                <button class="bet-btn" id="btn-head"><i class="fas fa-coins"></i> হেড</button>
+                <button class="bet-btn" id="btn-tail"><i class="fas fa-coins"></i> টেইল</button>
+            </div>
+            <button id="play-btn">খেলুন</button>
+
+            <div class="coin-container">
+                <div class="coin" id="coin">
+                    <div class="side head">হেড</div>
+                    <div class="side tail">টেইল</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-message" id="toast"></div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active"><i class="fas fa-home"></i> হোম</a>
+        <a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i> ডিপোজিট</a>
+        <a href="history.html" class="nav-item"><i class="fas fa-history"></i> হিস্ট্রি</a>
+        <a href="withdraw.html" class="nav-item"><i class="fas fa-arrow-right-arrow-left"></i> উইথড</a>
+    </div>
+</body>
+</html>

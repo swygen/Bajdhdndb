@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ডিপোজিট - অ্যাপ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');
+
+    :root {
+        --black-bg: #121212;
+        --card-bg-blur: rgba(255, 255, 255, 0.08);
+        --card-border: rgba(255, 255, 255, 0.15);
+        --primary-color: #4CAF50;
+        --highlight-color: #007bff;
+        --success-color: #4CAF50;
+        --text-color: #ffffff;
+        --light-text: #cccccc;
+    }
+
+    body, html {
+        margin: 0; padding: 0; height: 100%;
+        font-family: 'Tiro Bangla', sans-serif;
+        background-color: var(--black-bg);
+        color: var(--text-color);
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .container { padding: 20px; padding-bottom: 80px; max-width: 500px; margin: 0 auto; }
+
+    .glass-card {
+        background: var(--card-bg-blur);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid var(--card-border);
+        padding: 20px; margin-bottom: 25px;
+        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    h2 { font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); text-shadow: 0 0 5px rgba(76,175,80,0.5); }
+
+    .method-selector { display: flex; justify-content: space-around; margin-bottom: 30px; gap: 15px; }
+    .method-option {
+        flex-grow: 1; text-align: center; padding: 15px 10px; border-radius: 12px;
+        cursor: pointer; border: 2px solid transparent; background: rgba(255,255,255,0.05);
+        transition: all 0.3s ease;
+    }
+    .method-option:active { transform: scale(0.95); }
+    .method-option.selected { border: 2px solid var(--primary-color); box-shadow: 0 0 15px rgba(76,175,80,0.5); background: rgba(76,175,80,0.1); }
+
+    .method-icon { width: 45px; height: 45px; margin: 0 auto 8px auto; background-size: contain; background-repeat: no-repeat; background-position: center; filter: drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
+    #bKash-method .method-icon { background-image: url('https://i.postimg.cc/YSdGXHkz/1656235223bkash-logo.png'); }
+    #Nagad-method .method-icon { background-image: url('https://i.postimg.cc/SKg2ZhqB/id-Npcxg37-S-1760009795565.png'); }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-size: 1rem; color: var(--light-text); }
+    input[type="number"], input[type="text"] {
+        width: 100%; padding: 12px; border: 1px solid var(--card-border); border-radius: 8px;
+        background: rgba(255,255,255,0.05); color: var(--text-color); font-size: 1rem; box-sizing: border-box; transition: border-color 0.3s ease;
+    }
+    input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 8px rgba(76,175,80,0.5); }
+
+    .note { background: rgba(0,123,255,0.15); color: var(--highlight-color); padding: 12px; border-radius: 8px; font-size: 0.95rem; text-align: center; margin-bottom: 25px; border: 1px solid var(--highlight-color); }
+
+    .submit-btn {
+        width: 100%; padding: 15px; background-color: var(--primary-color); color: var(--text-color);
+        border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease; box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+    }
+    .submit-btn:hover { background-color: #388e3c; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { background-color: #555; cursor: not-allowed; opacity: 0.6; box-shadow: none; }
+
+    .bottom-nav {
+        position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto;
+        display: flex; justify-content: space-around; align-items: center; height: 65px;
+        background: rgba(18,18,18,0.95); backdrop-filter: blur(8px); border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000;
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--light-text); font-size: 0.7rem; transition: color 0.3s ease; width: 25%; padding: 5px 0; }
+    .nav-item i { font-size: 1.3rem; margin-bottom: 3px; transition: color 0.3s ease, transform 0.3s ease; }
+    .nav-item:hover, .nav-item.active { color: var(--primary-color); }
+    .nav-item.active i { color: var(--primary-color); transform: scale(1.1); }
+
+    .toast-message {
+        visibility: hidden; min-width: 250px; background-color: var(--success-color); color: #fff; text-align: center;
+        border-radius: 8px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 80px;
+        transform: translateX(-50%); opacity: 0; transition: opacity 0.5s, bottom 0.5s;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; bottom: 90px; }
+
+    .copy-btn { display: inline-block; margin-top: 10px; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 6px; cursor: pointer; background-color: var(--highlight-color); color: #fff; transition: background 0.3s ease; }
+    .copy-btn:hover { background-color: #0056b3; }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+</head>
+<body>
+<div class="container">
+    <h2>ডিপোজিট নিশ্চিত করুন</h2>
+    
+    <div class="glass-card">
+        <label>পেমেন্ট মেথড নির্বাচন করুন</label>
+        <div class="method-selector">
+            <div class="method-option" id="bKash-method" data-method="bKash" data-number="01318645435">
+                <div class="method-icon"></div>
+                <span>বিকাশ (Agent)</span>
+            </div>
+            <div class="method-option" id="Nagad-method" data-method="Nagad" data-number="01916196917">
+                <div class="method-icon"></div>
+                <span>নগদ (Personal)</span>
+            </div>
+        </div>
+
+        <div class="form-group" id="number-display" style="text-align: center; margin-top: 10px; display: none;">
+            <label id="selected-number-label" style="font-size: 1.1rem;">
+                নম্বর: <strong style="color: var(--highlight-color);">01XXX</strong>
+            </label>
+            <button class="copy-btn" id="copyNumberBtn">নম্বর কপি করুন</button>
+            <small style="color: var(--light-text); display: block;">Send Money করার পর নিচের ফর্মটি পূরণ করুন।</small>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <form id="depositForm">
+            <div class="note">প্রথম ডিপোজিট ≥ ৫০০৳ → ১০% বোনাস! 🚀</div>
+
+            <div class="form-group">
+                <label for="amount">জমার পরিমাণ (৳):</label>
+                <input type="number" id="amount" placeholder="ন্যূনতম ১৫০৳" min="150" max="100000" required>
+                <small style="color: var(--light-text);">সীমা: ১৫০৳ থেকে ১,০০,০০০৳</small>
+            </div>
+
+            <div class="form-group">
+                <label for="transactionId">ট্রানজেকশন আইডি (Txn ID):</label>
+                <input type="text" id="transactionId" placeholder="আপনার ট্রানজেকশন আইডি দিন" required>
+            </div>
+
+            <button type="submit" class="submit-btn" disabled id="submit-button">ডিপোজিট নিশ্চিত করুন</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast-message"></div>
+
+<div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i><span>হোম</span></a>
+    <a href="game.html" class="nav-item"><i class="fas fa-gamepad"></i><span>গেম</span></a>
+    <a href="deposit.html" class="nav-item active"><i class="fas fa-wallet"></i><span>ডিপোজিট</span></a>
+    <a href="account.html" class="nav-item"><i class="fas fa-user-circle"></i><span>একাউন্ট</span></a>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+        authDomain: "red-chili-bot.firebaseapp.com",
+        projectId: "red-chili-bot",
+        storageBucket: "red-chili-bot.appspot.com",
+        messagingSenderId: "125399502243",
+        appId: "1:125399502243:web:e2642cbbd3675622379e16"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let selectedMethod = null;
+    const methods = document.querySelectorAll('.method-option');
+    const form = document.getElementById('depositForm');
+    const submitButton = document.getElementById('submit-button');
+    const numberDisplay = document.getElementById('number-display');
+    const selectedNumberLabel = document.getElementById('selected-number-label');
+    const amountInput = document.getElementById('amount');
+    const txnIdInput = document.getElementById('transactionId');
+    const copyBtn = document.getElementById('copyNumberBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg) { 
+        toast.textContent = msg; 
+        toast.classList.add('show'); 
+        setTimeout(()=>toast.classList.remove('show'),4000); 
+    }
+
+    methods.forEach(method => {
+        method.addEventListener('click', () => {
+            methods.forEach(m => m.classList.remove('selected'));
+            method.classList.add('selected');
+            selectedMethod = { name: method.dataset.method, number: method.dataset.number };
+            selectedNumberLabel.innerHTML = `${selectedMethod.name}: <strong style="color: var(--highlight-color);">${selectedMethod.number}</strong>`;
+            numberDisplay.style.display = 'block';
+            checkFormValidity();
+        });
+    });
+
+    function checkFormValidity() {
+        const amountValid = parseFloat(amountInput.value) >= 150 && parseFloat(amountInput.value) <= 100000;
+        const txnValid = txnIdInput.value.trim().length >= 6;
+        submitButton.disabled = !(selectedMethod && amountValid && txnValid);
+    }
+
+    amountInput.addEventListener('input', checkFormValidity);
+    txnIdInput.addEventListener('input', checkFormValidity);
+
+    copyBtn.addEventListener('click', async () => {
+        if(!selectedMethod) return;
+        const textToCopy = selectedMethod.number;
+        try {
+            if(navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(textToCopy);
+            } else {
+                const tempInput = document.createElement('input');
+                tempInput.value = textToCopy;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+            }
+            showToast("নম্বর কপি হয়েছে ✅");
+        } catch(e) {
+            showToast("কপি ব্যর্থ ❌");
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if(!selectedMethod) {
+            showToast("দয়া করে একটি পেমেন্ট মেথড নির্বাচন করুন।");
+            return;
+        }
+
+        const user = auth.currentUser;
+        if(!user) {
+            showToast("প্রথমে লগইন করুন।");
+            // Instead of returning, redirecting might be better if the user has been logged out silently
+            setTimeout(() => { window.location.href = "login.html"; }, 1500); 
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "অনুরোধ জমা হচ্ছে... ⏳";
+
+        const depositData = {
+            userId: user.uid,
+            method: selectedMethod.name,
+            depositNumber: selectedMethod.number,
+            amount: parseFloat(amountInput.value),
+            transactionId: txnIdInput.value.trim(),
+            status: 'Pending', // Initial status
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            // depositRequests collection এ নতুন ডকুমেন্ট তৈরি হবে
+            await db.collection('depositRequests').add(depositData);
+
+            showToast("ডিপোজিট সফলভাবে জমা হয়েছে! ✅ অপেক্ষা করুন।");
+
+            // ফর্ম রিসেট
+            form.reset();
+            selectedMethod = null;
+            numberDisplay.style.display = 'none';
+            methods.forEach(m => m.classList.remove('selected'));
+            checkFormValidity();
+
+        } catch(err) {
+            console.error(err);
+            showToast("ডিপোজিট ব্যর্থ ❌");
+        } finally {
+            submitButton.textContent = "ডিপোজিট নিশ্চিত করুন";
+            checkFormValidity();
+        }
+    });
+
+    // ন্যাভিগেশন লিঙ্ক হ্যান্ডেল
+    document.querySelectorAll('.bottom-nav a').forEach(link => {
+        if(link.getAttribute('href') === 'deposit.html') return;
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            window.location.href = link.getAttribute('href');
+        });
+    });
+
+    // ইউজার লগইন চেক এবং redirect
+    auth.onAuthStateChanged(user => {
+        if(!user) {
+            // Check if user is on the deposit page and not logged in, then redirect
+            if (window.location.pathname.endsWith('deposit.html')) {
+                showToast("দয়া করে প্রথমে লগইন করুন।");
+                setTimeout(() => { window.location.href = "login.html"; }, 2000);
+            }
+        }
+    });
+</script>
+</body>
+</html>

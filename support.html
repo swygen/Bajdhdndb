@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>সাপোর্ট - অ্যাপ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ফন্ট যা বাংলা সমর্থন করে */
+        @import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');
+
+        :root {
+            --black-bg: #121212;
+            --card-bg-blur: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --support-color: #3498db; /* নীল (Support Color) */
+            --email-color: #c0392b; /* লালচে */
+            --telegram-color: #0088cc; /* টেলিগ্রাম নীল */
+            --text-color: #ffffff;
+            --light-text: #cccccc;
+        }
+
+        /* বেসিক রিসেট */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Tiro Bangla', sans-serif;
+            background-color: var(--black-bg);
+            color: var(--text-color);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            padding: 20px;
+            padding-bottom: 80px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* গ্লাসমরফিক কার্ড স্টাইল */
+        .glass-card {
+            background: var(--card-bg-blur);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+        }
+        
+        /* শিরোনাম */
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--support-color);
+            text-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        /* যোগাযোগ কার্ড */
+        .contact-info {
+            margin-bottom: 30px;
+        }
+        .contact-info p {
+            font-size: 1rem;
+            color: var(--light-text);
+            margin: 5px 0;
+        }
+        .contact-info strong {
+            color: var(--text-color);
+            display: block;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        /* সাপোর্ট বাটন */
+        .support-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        .support-button:active {
+            transform: scale(0.98);
+        }
+        .support-button i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        /* ইমেল বাটন স্টাইল */
+        #email-btn {
+            background-color: var(--email-color);
+            box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4);
+        }
+        /* টেলিগ্রাম বাটন স্টাইল */
+        #telegram-btn {
+            background-color: var(--telegram-color);
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+        }
+
+        /* স্থির বটম নেভিগেশন (ড্যাশবোর্ডের মতো) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 65px;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--light-text);
+            font-size: 0.7rem;
+            transition: color 0.3s ease;
+            width: 20%;
+            padding: 5px 0;
+        }
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        /* এখানে সাপোর্ট কালার ব্যবহার করা হয়েছে */
+        .nav-item:hover, .nav-item.active {
+            color: var(--support-color);
+        }
+        .nav-item.active i {
+            color: var(--support-color);
+            transform: scale(1.1);
+        }
+
+    </style>
+    <script src="firebase-config.js" defer></script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>সহায়তা ও সাপোর্ট</h2>
+        
+        <div class="glass-card">
+            
+            <p style="font-size: 1.1rem; color: var(--support-color); margin-bottom: 30px;">
+                যেকোনো সমস্যা বা তথ্যের জন্য আমাদের সাথে যোগাযোগ করুন।
+            </p>
+
+            <a href="mailto:sup@teamhelp.com?subject=Support%20Request%20from%20App" id="email-btn" class="support-button">
+                <i class="fas fa-envelope"></i>
+                <span>ইমেল সাপোর্ট</span>
+            </a>
+            <p class="contact-info">ইমেল ঠিকানা: <strong>sup@teamhelp.com</strong></p>
+
+            <a href="https://t.me/SupTeamhelp" target="_blank" id="telegram-btn" class="support-button">
+                <i class="fab fa-telegram-plane"></i>
+                <span>টেলিগ্রাম সাপোর্ট</span>
+            </a>
+            <p class="contact-info">টেলিগ্রাম লিঙ্ক: <strong>@SupTeamhelp</strong></p>
+
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <p style="font-size: 0.85rem; color: var(--light-text);">
+                দ্রুত উত্তর পেতে আপনার ইউজার আইডি উল্লেখ করুন।
+            </p>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>হোম</span>
+        </a>
+        <a href="game.html" class="nav-item">
+            <i class="fas fa-gamepad"></i>
+            <span>গেম</span>
+        </a>
+        <a href="deposit.html" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>ডিপোজিট</span>
+        
+        <a href="#" class="nav-item active">
+            <i class="fas fa-headset"></i>
+            <span>সাপোর্ট</span>
+        </a>
+    </div>
+
+    <script>
+        // ন্যাভিগেশন লজিক
+        document.querySelectorAll('.bottom-nav a').forEach(link => {
+            if (link.getAttribute('href') === 'support.html') return;
+            
+            link.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                const targetFile = link.getAttribute('href');
+                window.location.href = targetFile;
+            });
+        });
+    </script>
+</body>
+</html>
+

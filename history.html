@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>হিস্টোরি - অ্যাপ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla:wght@400;700&display=swap');
+    :root {
+        --black-bg: #121212;
+        --card-bg-blur: rgba(255, 255, 255, 0.08);
+        --card-border: rgba(255, 255, 255, 0.15);
+        --primary-color: #f39c12; /* History/Info Color */
+        --highlight-color: #007bff;
+        --success-color: #2ecc71;
+        --pending-color: #f1c40f;
+        --failed-color: #e74c3c;
+        --text-color: #ffffff;
+        --light-text: #cccccc;
+    }
+
+    body, html {
+        margin: 0; padding: 0; height: 100%;
+        font-family: 'Tiro Bangla', sans-serif;
+        background-color: var(--black-bg);
+        color: var(--text-color);
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .container { padding: 20px; padding-bottom: 80px; max-width: 500px; margin: 0 auto; }
+
+    h2 { font-size: 1.5rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); text-shadow: 0 0 5px rgba(243,156,18,0.5); }
+
+    /* --- Tab Navigation --- */
+    .tab-nav {
+        display: flex; justify-content: space-between; margin-bottom: 20px;
+        background: var(--card-bg-blur); border-radius: 10px; padding: 5px;
+        border: 1px solid var(--card-border);
+    }
+    .tab-btn {
+        flex-grow: 1; padding: 10px 5px; text-align: center; cursor: pointer;
+        font-size: 0.9rem; font-weight: 700; color: var(--light-text);
+        border-radius: 8px; transition: all 0.3s ease;
+    }
+    .tab-btn.active {
+        background-color: var(--primary-color);
+        color: var(--black-bg);
+        box-shadow: 0 4px 10px rgba(243,156,18,0.4);
+    }
+    .tab-btn:hover:not(.active) { background-color: rgba(255, 255, 255, 0.15); }
+
+    /* --- History List & Items --- */
+    .history-list { display: none; }
+    .history-list.active { display: block; }
+    .history-item {
+        background: var(--card-bg-blur);
+        border-radius: 12px; padding: 15px; margin-bottom: 15px;
+        border: 1px solid var(--card-border);
+        display: flex; justify-content: space-between; align-items: center;
+        transition: transform 0.2s ease;
+    }
+    .history-item:active { transform: scale(0.98); }
+
+    .item-details { flex-grow: 1; }
+    .item-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 5px; }
+    .item-meta { font-size: 0.85rem; color: var(--light-text); }
+    .item-meta i { margin-right: 5px; }
+
+    .item-amount { font-size: 1.2rem; font-weight: 700; margin-left: 10px; }
+    .status-badge {
+        display: inline-block; padding: 4px 8px; border-radius: 6px;
+        font-size: 0.75rem; font-weight: 700; margin-top: 5px;
+    }
+    .status-Pending { background-color: var(--pending-color); color: var(--black-bg); }
+    .status-Approved, .status-Win { background-color: var(--success-color); color: var(--black-bg); }
+    .status-Rejected, .status-Lose { background-color: var(--failed-color); color: var(--text-color); }
+    .status-Win { background-color: var(--success-color); }
+    .status-Lose { background-color: var(--failed-color); }
+
+    /* --- Loading/No Data --- */
+    .loading-message, .no-data-message {
+        text-align: center; padding: 40px 20px; color: var(--light-text); font-size: 1rem;
+        border: 1px dashed var(--card-border); border-radius: 10px; margin-top: 20px;
+    }
+
+    /* --- Bottom Navigation (Shared) --- */
+    .bottom-nav {
+        position: fixed; bottom: 0; left: 0; right: 0; max-width: 500px; margin: 0 auto;
+        display: flex; justify-content: space-around; align-items: center; height: 65px;
+        background: rgba(18,18,18,0.95); backdrop-filter: blur(8px); border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000;
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--light-text); font-size: 0.7rem; transition: color 0.3s ease; width: 25%; padding: 5px 0; }
+    .nav-item i { font-size: 1.3rem; margin-bottom: 3px; transition: color 0.3s ease, transform 0.3s ease; }
+    .nav-item:hover, .nav-item.active { color: var(--primary-color); }
+    .nav-item.active i { color: var(--primary-color); transform: scale(1.1); }
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" defer></script>
+
+</head>
+<body>
+<div class="container">
+    <h2>আপনার লেনদেন ও গেম হিস্টোরি</h2>
+    
+    <div class="tab-nav">
+        <div class="tab-btn active" data-tab="deposit">ডিপোজিট</div>
+        <div class="tab-btn" data-tab="withdraw">উইথড্র</div>
+        <div class="tab-btn" data-tab="game">গেম</div>
+    </div>
+
+    <div id="deposit-list" class="history-list active">
+        <div class="loading-message">ডিপোজিট হিস্টোরি লোড হচ্ছে...</div>
+    </div>
+    <div id="withdraw-list" class="history-list">
+        <div class="loading-message">উইথড্র হিস্টোরি লোড হচ্ছে...</div>
+    </div>
+    <div id="game-list" class="history-list">
+        <div class="loading-message">গেম হিস্টোরি লোড হচ্ছে...</div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i><span>হোম</span></a>
+    <a href="game.html" class="nav-item"><i class="fas fa-gamepad"></i><span>গেম</span></a>
+    <a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i><span>ডিপোজিট</span></a>
+    <a href="history.html" class="nav-item active"><i class="fas fa-history"></i><span>হিস্টোরি</span></a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
+            authDomain: "red-chili-bot.firebaseapp.com",
+            projectId: "red-chili-bot",
+            storageBucket: "red-chili-bot.appspot.com",
+            messagingSenderId: "125399502243",
+            appId: "1:125399502243:web:e2642cbbd3675622379e16"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let userId = null;
+        const depositList = document.getElementById('deposit-list');
+        const withdrawList = document.getElementById('withdraw-list');
+        const gameList = document.getElementById('game-list');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const historyLists = {
+            'deposit': depositList,
+            'withdraw': withdrawList,
+            'game': gameList
+        };
+
+        // --- Utility Functions ---
+
+        function formatDate(timestamp) {
+            if (!timestamp || !timestamp.toDate) return 'সময় পাওয়া যায়নি';
+            const date = timestamp.toDate();
+            return date.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + 
+                   date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderItem(data, type) {
+            let title, icon, amountText, statusClass;
+            let metaHtml = '';
+
+            if (type === 'deposit' || type === 'withdraw') {
+                title = `${data.method} ${type === 'deposit' ? 'ডিপোজিট' : 'উইথড্র'} রিকোয়েস্ট`;
+                icon = type === 'deposit' ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+                amountText = `৳${data.amount.toFixed(2)}`;
+                statusClass = `status-${data.status}`;
+                metaHtml = `<i class="fas fa-hashtag"></i> ${data.transactionId || data.payoutNumber || 'N/A'}`;
+            } else if (type === 'game') {
+                title = `গেম: ${data.gameName || 'ক্র্যাশ'}`;
+                icon = 'fas fa-dice';
+                amountText = data.result === 'win' ? `+ ৳${data.winningAmount.toFixed(2)}` : `- ৳${data.betAmount.toFixed(2)}`;
+                statusClass = `status-${data.result}`;
+                metaHtml = `<i class="fas fa-money-bill"></i> বাজি: ৳${data.betAmount.toFixed(2)}`;
+            }
+
+            return `
+                <div class="history-item">
+                    <div class="item-details">
+                        <div class="item-title"><i class="${icon}"></i> ${title}</div>
+                        <div class="item-meta">
+                            ${metaHtml}
+                        </div>
+                        <div class="item-meta">
+                            <i class="fas fa-clock"></i> ${formatDate(data.timestamp)}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="item-amount">${amountText}</div>
+                        <span class="status-badge ${statusClass}">${data.status || data.result}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadHistory(collection, listElement, type) {
+            listElement.innerHTML = `<div class="loading-message"><i class="fas fa-spinner fa-spin"></i> লোড হচ্ছে...</div>`;
+
+            db.collection(collection)
+                .where('userId', '==', userId)
+                .orderBy('timestamp', 'desc')
+                .limit(50)
+                .get()
+                .then(snapshot => {
+                    listElement.innerHTML = '';
+                    if (snapshot.empty) {
+                        listElement.innerHTML = `<div class="no-data-message">কোন ${type} হিস্টোরি পাওয়া যায়নি।</div>`;
+                        return;
+                    }
+                    snapshot.docs.forEach(doc => {
+                        listElement.innerHTML += renderItem(doc.data(), type);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading history:", error);
+                    listElement.innerHTML = `<div class="no-data-message">হিস্টোরি লোড করতে সমস্যা হয়েছে।</div>`;
+                });
+        }
+
+        // --- Event Handlers ---
+
+        function handleTabClick(event) {
+            const selectedTab = event.currentTarget.dataset.tab;
+
+            // Update tab button styles
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Toggle history list visibility
+            Object.values(historyLists).forEach(list => list.classList.remove('active'));
+            historyLists[selectedTab].classList.add('active');
+
+            // Load data if not already loaded (simple check)
+            if (historyLists[selectedTab].innerHTML.includes('লোড হচ্ছে')) {
+                if (selectedTab === 'deposit') loadHistory('depositRequests', depositList, 'deposit');
+                if (selectedTab === 'withdraw') loadHistory('withdrawRequests', withdrawList, 'withdraw');
+                if (selectedTab === 'game') loadHistory('gameHistory', gameList, 'game');
+            }
+        }
+
+        tabButtons.forEach(btn => btn.addEventListener('click', handleTabClick));
+
+        // --- Initialization ---
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userId = user.uid;
+                // Load the default active tab's data
+                loadHistory('depositRequests', depositList, 'deposit');
+            } else {
+                alert("প্রথমে লগইন করুন।");
+                window.location.href = 'login.html';
+            }
+        });
+
+        // ন্যাভিগেশন লিঙ্ক হ্যান্ডেল
+        document.querySelectorAll('.bottom-nav a').forEach(link => {
+            if(link.getAttribute('href') === 'history.html') return;
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                window.location.href = link.getAttribute('href');
+            });
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Notification Center</title>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f6f7fb;
+      color: #222;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .header h2 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .header button {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    /* Notification Container */
+    .notification-container {
+      padding: 15px;
+    }
+
+    .notification-card {
+      background: white;
+      border-radius: 15px;
+      padding: 15px 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      transition: all 0.3s ease;
+      border-left: 5px solid #4f46e5;
+    }
+
+    .notification-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+
+    .notification-icon {
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      color: white;
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(99,102,241,0.4);
+    }
+
+    .notification-content {
+      flex: 1;
+    }
+
+    .notification-content h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .notification-content p {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .notification-time {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    /* Empty Message */
+    .empty {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 480px) {
+      .notification-card {
+        padding: 12px 14px;
+      }
+      .notification-content h4 {
+        font-size: 15px;
+      }
+      .notification-content p {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <button onclick="window.location.href='dashboard.html'">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h2><i class="fas fa-bell"></i> Notification Center</h2>
+    <i class=""></i>
+  </div>
+
+  <!-- Notification Section -->
+  <div class="notification-container" id="notificationList">
+    <p class="empty">🔔 নোটিফিকেশন লোড হচ্ছে...</p>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // ✅ Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // ✅ তোমার Firebase Config
+    const firebaseConfig = {
+  apiKey: "AIzaSyC1nQXKB2gqIUgnecZP8H_BYbhNTvI9InY",
+  authDomain: "head-tell-f7a80.firebaseapp.com",
+  projectId: "head-tell-f7a80",
+  storageBucket: "head-tell-f7a80.firebasestorage.app",
+  messagingSenderId: "972508912669",
+  appId: "1:972508912669:web:2bd505a46be2165d73faf4",
+  measurementId: "G-GZ38LM778D"
+};
+
+    // ✅ Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ✅ Notification লোড ফাংশন
+    async function loadNotifications() {
+      const listContainer = document.getElementById('notificationList');
+      listContainer.innerHTML = `<p class="empty">🔔 নোটিফিকেশন লোড হচ্ছে...</p>`;
+
+      try {
+        const q = query(collection(db, "notifications"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          listContainer.innerHTML = `<p class="empty">কোনো নোটিফিকেশন পাওয়া যায়নি 😴</p>`;
+          return;
+        }
+
+        listContainer.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const time = new Date(data.timestamp?.toDate()).toLocaleString("bn-BD", {
+            hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short'
+          });
+
+          const card = document.createElement("div");
+          card.className = "notification-card";
+          card.innerHTML = `
+            <div class="notification-icon">
+              <i class="${data.icon || 'fas fa-bell'}"></i>
+            </div>
+            <div class="notification-content">
+              <h4>${data.title || 'নোটিফিকেশন'}</h4>
+              <p>${data.message || ''}</p>
+              <div class="notification-time"><i class="fas fa-clock"></i> ${time}</div>
+            </div>
+          `;
+          listContainer.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        listContainer.innerHTML = `<p class="empty">❌ নোটিফিকেশন লোডে সমস্যা হয়েছে।</p>`;
+      }
+    }
+
+    // ✅ পেজ লোড হলে কল হবে
+    loadNotifications();
+  </script>
+</body>
+</html>
