@@ -103,27 +103,21 @@ h2 {
     background: rgba(46,204,113,0.1);
     border-radius:10px;
     border:1px solid rgba(46,204,113,0.3);
-    text-align: left;
+    text-align: center;
 }
 .count-box i {
     font-size:1.5rem;
     color: var(--refer-color);
-    margin-right:10px;
+    margin-bottom:5px;
 }
 .count-box p {
     font-size:0.9rem;
     color: var(--light-text);
-    margin:0;
-    display:block;
-    text-align: center;
+    margin:0 0 5px 0;
 }
 .count-box strong {
     font-size:1.3rem;
     color: var(--refer-color);
-    margin-left:5px;
-    display:block;
-    text-align: center;
-    margin-top: 5px;
 }
 
 .bottom-nav {
@@ -177,23 +171,6 @@ h2 {
 }
 .toast-message.show { visibility:visible; opacity:1; bottom:90px; }
 </style>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
-  authDomain: "red-chili-bot.firebaseapp.com",
-  projectId: "red-chili-bot",
-  storageBucket: "red-chili-bot.appspot.com",
-  messagingSenderId: "125399502243",
-  appId: "1:125399502243:web:e2642cbbd3675622379e16",
-  measurementId: "G-ETBNKN4N9B"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-</script>
 </head>
 <body>
 
@@ -216,15 +193,13 @@ const db = firebase.firestore();
 
 <div class="count-group">
     <div class="count-box">
-        <p>
-            <i class="fas fa-users"></i> মোট রেফারেল:
-        </p>
+        <i class="fas fa-users"></i>
+        <p>মোট রেফারেল:</p>
         <strong id="referral-count">0</strong>
     </div>
     <div class="count-box">
-        <p>
-            <i class="fas fa-sack-dollar"></i> মোট কমিশন (৳):
-        </p>
+        <i class="fas fa-sack-dollar"></i>
+        <p>মোট কমিশন (৳):</p>
         <strong id="total-commission">0.00</strong>
     </div>
 </div>
@@ -246,65 +221,67 @@ const db = firebase.firestore();
 <a href="deposit.html" class="nav-item"><i class="fas fa-wallet"></i><span>ডিপোজিট</span></a>
 <a href="#" class="nav-item active"><i class="fas fa-user-group"></i><span>রেফার</span></a>
 </div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyCCR-mGB4rkQp0yr_H3yMTocwfRlSFtLN8",
-  authDomain: "red-chili-bot.firebaseapp.com",
-  projectId: "red-chili-bot",
-  storageBucket: "red-chili-bot.appspot.com",
-  messagingSenderId: "125399502243",
-  appId: "1:125399502243:web:e2642cbbd3675622379e16",
-  measurementId: "G-ETBNKN4N9B"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-// Telegram context (optional)
-const tg = window.Telegram?.WebApp || {};
-
-const referralLinkElement = document.getElementById('referral-link');
-const copyButton = document.getElementById('copy-btn');
-const referralCountElement = document.getElementById('referral-count');
-const totalCommissionElement = document.getElementById('total-commission');
-
-// ✅ রেফারেল লিংক তৈরি ফাংশন
-function setReferralLink(uid){
-    const shortId = uid.substring(0, 8);
-    referralLinkElement.textContent = `https://t.me/Spicy_Earn_bot?start=${shortId}`;
-    copyButton.disabled = false;
+// ✅ LocalStorage UID
+function getOrCreateUID() {
+    let uid = localStorage.getItem('userUID');
+    if(!uid){
+        uid = Math.random().toString(36).substring(2,10).toUpperCase();
+        localStorage.setItem('userUID', uid);
+    }
+    return uid;
 }
 
-// ✅ ইউজার লগইন চেক
-auth.onAuthStateChanged(user => {
-    if (user) {
-        const uid = user.uid;
-        setReferralLink(uid);
-    } else {
-        referralLinkElement.textContent = 'লগইন প্রয়োজন 🔒';
-        copyButton.disabled = true;
+// রেফারেল লিঙ্ক সেট করা
+function setReferralLink() {
+    const uid = getOrCreateUID();
+    const referralLink = `http://t.me/BdCoinFlipBot?start=${uid}`;
+    const referralElement = document.getElementById('referral-link');
+    referralElement.textContent = referralLink;
+    document.getElementById('copy-btn').disabled = false;
+}
+
+// কপি ফাংশন: Telegram Mini App সহ সব ব্রাউজারে কাজ করবে
+document.getElementById('copy-btn').addEventListener('click', async ()=>{
+    const link = document.getElementById('referral-link').textContent;
+
+    try {
+        // Telegram WebApp Copy
+        if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.copyText){
+            window.Telegram.WebApp.copyText(link);
+        } else if(navigator.clipboard){
+            await navigator.clipboard.writeText(link);
+        } else {
+            // fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = link;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        showToast("লিঙ্ক সফলভাবে কপি হয়েছে ✅");
+    } catch(err){
+        showToast("কপি করতে ব্যর্থ ❌");
     }
 });
 
-// ✅ কপি ফাংশন
-copyButton.addEventListener('click', () => {
-    const linkToCopy = referralLinkElement.textContent;
-    navigator.clipboard.writeText(linkToCopy)
-        .then(() => showToast("লিঙ্ক সফলভাবে কপি হয়েছে ✅"))
-        .catch(() => showToast("কপি করতে ব্যর্থ ❌"));
-});
-
-// ✅ টোস্ট মেসেজ
-function showToast(msg) {
+// টোস্ট মেসেজ
+function showToast(msg){
     const toast = document.getElementById('toast');
     toast.textContent = msg;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2500);
+    setTimeout(()=> toast.classList.remove('show'), 2500);
 }
+
+// Initialize
+setReferralLink();
+
+// Referral stats
+document.getElementById('referral-count').textContent = '0';
+document.getElementById('total-commission').textContent = '0.00';
 </script>
+
 </body>
 </html>
