@@ -173,28 +173,20 @@ async function updateUserBalance(newBalance){
     updateBalanceDisplay();
 }
 
-function getGameOutcome(betAmount, selectedChoice){
-    // ধারাবাহিক বেট লজিক
+function getGameOutcome(betAmount, userChoice){
     consecutiveBets.push(betAmount);
     if(consecutiveBets.length > 5) consecutiveBets.shift(); // সর্বশেষ 5 বেট সংরক্ষণ
 
     let winProbability = 0.5;
-
-    // ধারাবাহিক 2500-3000 বেট করলে 490 পর্যন্ত যাওয়ার probability 40%
     const recentSum = consecutiveBets.reduce((a,b)=>a+b,0);
     if(recentSum >= 2500 && recentSum <= 3000 && userBalance < MAX_BALANCE){
         winProbability = 0.4;
     }
-
-    // বড় বেটের ক্ষেত্রে (50+) win probability 25%
     if(betAmount > 50) winProbability = Math.min(winProbability, 0.25);
-
     let win = Math.random() < winProbability;
-
-    // যদি জেতা হলে balance 490 ছাড়িয়ে যায়, auto lose
     if(win && (userBalance + betAmount) > MAX_BALANCE) win = false;
 
-    return win ? selectedChoice : (selectedChoice==='head'?'tail':'head');
+    return win ? userChoice : (userChoice==='head'?'tail':'head');
 }
 
 function playSound(result){
@@ -226,18 +218,17 @@ async function playGame(){
     isFlipping=true;
     playBtn.disabled=true; btnHead.disabled=true; btnTail.disabled=true;
 
-    const outcome = getGameOutcome(betAmount, selectedChoice);
+    const userChoice = selectedChoice;  // ✅ Save selection
+    const outcome = getGameOutcome(betAmount, userChoice);
 
-    // Coin animation
     coinElement.classList.remove('flipping-head','flipping-tail','flash-win','flash-lose');
     void coinElement.offsetWidth;
     if(outcome==='head') coinElement.classList.add('flipping-head');
     else coinElement.classList.add('flipping-tail');
 
-    // ৩ সেকেন্ড অপেক্ষা
     setTimeout(async ()=>{
         let newBalance = userBalance;
-        if(selectedChoice === outcome){
+        if(userChoice === outcome){
             newBalance += betAmount;
             if(newBalance > MAX_BALANCE) newBalance = MAX_BALANCE;
             coinElement.classList.add('flash-win');
@@ -253,7 +244,6 @@ async function playGame(){
 
         await updateUserBalance(newBalance);
 
-        // Reset state
         selectedChoice=null;
         btnHead.classList.remove('selected');
         btnTail.classList.remove('selected');
